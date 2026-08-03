@@ -1,0 +1,261 @@
+{
+  "name": "Score Routing & Data Transformation",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "b71a7126-e141-417e-ae98-d20fba00f403",
+      "name": "Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 10 sample records with a numeric score\nconst records = [\n  { id: 1, name: 'Alice',   score: 92 },\n  { id: 2, name: 'Bob',     score: 45 },\n  { id: 3, name: 'Carol',   score: 78 },\n  { id: 4, name: 'David',   score: 88 },\n  { id: 5, name: 'Eve',     score: 60 },\n  { id: 6, name: 'Frank',   score: 34 },\n  { id: 7, name: 'Grace',   score: 95 },\n  { id: 8, name: 'Heidi',   score: 71 },\n  { id: 9, name: 'Ivan',    score: 55 },\n  { id: 10, name: 'Judy',   score: 83 },\n];\nreturn records.map((r) => ({ json: r }));"
+      },
+      "id": "df0787e4-fec1-44c0-bca2-5ffb38fa0b91",
+      "name": "Generate 10 Sample Records",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.score }}",
+                    "operator": {
+                      "type": "number",
+                      "operation": "gte"
+                    },
+                    "rightValue": 85
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.score }}",
+                    "operator": {
+                      "type": "number",
+                      "operation": "gte"
+                    },
+                    "rightValue": 60
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.score }}",
+                    "operator": {
+                      "type": "number",
+                      "operation": "lt"
+                    },
+                    "rightValue": 60
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f2156922-ffac-48ac-8323-8d1954b5ca53",
+      "name": "Route By Score",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        448,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "group",
+              "value": "Excellent",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "next_action",
+              "value": "Promote / offer stretch goals",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "1413fed6-a0e4-4a68-8fbd-e8ae49154be3",
+      "name": "Tag Excellent",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1",
+              "name": "group",
+              "value": "Good",
+              "type": "string"
+            },
+            {
+              "id": "b2",
+              "name": "next_action",
+              "value": "Encourage and monitor progress",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "70a3b05b-6135-4d1d-865e-e4e162f34d79",
+      "name": "Tag Good",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        672,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c1",
+              "name": "group",
+              "value": "Needs Improvement",
+              "type": "string"
+            },
+            {
+              "id": "c2",
+              "name": "next_action",
+              "value": "Schedule review / provide support",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "713b7f47-b8ed-4d79-9f6f-59d5c5d6c1c8",
+      "name": "Tag Needs Improvement",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        672,
+        384
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Generate 10 Sample Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate 10 Sample Records": {
+      "main": [
+        [
+          {
+            "node": "Route By Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route By Score": {
+      "main": [
+        [
+          {
+            "node": "Tag Excellent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Tag Good",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Tag Needs Improvement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ecdec655-38c0-4d01-9e7e-469bbe39281e",
+  "meta": {
+    "instanceId": "4c0325b2fdb15da78159c0e7778935fab29e1d75bed64182782c139929f6a16d"
+  },
+  "nodeGroups": [],
+  "id": "9auZucoRoDZHDk64",
+  "tags": []
+}
