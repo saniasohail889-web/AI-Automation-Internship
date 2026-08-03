@@ -1,0 +1,113 @@
+{
+  "name": "Day 3 - Record Classifier",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "00b67f2f-cc69-431e-9c16-cd8382d7cc42",
+      "name": "Run Workflow",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sample input records: Name, Email, Department, Score\nconst records = [\n  { Name: \"Ayesha Khan\",    Email: \"ayesha.khan@example.com\",  Department: \"Engineering\", Score: 92 },\n  { Name: \"Hadia\",    Email: \"hadia.ahmed@example.com\",  Department: \"Sales\",       Score: 74 },\n  { Name: \"Sara\",    Email: \"sara.gomez@example.com\",  Department: \"Marketing\",   Score: 58 },\n  { Name: \"Laiba\",     Email: \"laiba.chen@example.com\",   Department: \"Finance\",     Score: 80 },\n  { Name: \"Hajira\",    Email: \"hajira.wilson@example.com\",  Department: \"Support\",     Score: 45 }\n];\n\n// Return one n8n item per record\nreturn records.map(r => ({ json: r }));"
+      },
+      "id": "4658e811-470a-4a19-b4ff-edc785a1bcd9",
+      "name": "Create Sample Records",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "name",
+              "name": "Name",
+              "value": "={{ $json.Name }}",
+              "type": "string"
+            },
+            {
+              "id": "email",
+              "name": "Email",
+              "value": "={{ $json.Email }}",
+              "type": "string"
+            },
+            {
+              "id": "department",
+              "name": "Department",
+              "value": "={{ $json.Department }}",
+              "type": "string"
+            },
+            {
+              "id": "score",
+              "name": "Score",
+              "value": "={{ $json.Score }}",
+              "type": "number"
+            },
+            {
+              "id": "classification",
+              "name": "Classification",
+              "value": "={{ $json.Score >= 80 ? \"Excellent\" : ($json.Score >= 60 ? \"Good\" : \"Needs Improvement\") }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1ea60a52-1d69-46e5-8d6a-eaf28ab3b675",
+      "name": "Classify Record",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        448,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Run Workflow": {
+      "main": [
+        [
+          {
+            "node": "Create Sample Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Sample Records": {
+      "main": [
+        [
+          {
+            "node": "Classify Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "c2f675f1-92db-4575-a4bd-ece0001e14f9",
+  "meta": {
+    "instanceId": "4c0325b2fdb15da78159c0e7778935fab29e1d75bed64182782c139929f6a16d"
+  },
+  "nodeGroups": [],
+  "id": "Y26RMYIAUSGtGgTH",
+  "tags": []
+}
