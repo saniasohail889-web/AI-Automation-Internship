@@ -1,0 +1,355 @@
+{
+  "name": "Candidate Screening Automation",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "f8158669-ae80-42da-b780-18169dd60d59",
+      "name": "Start Screening",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1-Y5KYUyXcScOngXltg-uGeIMshNtJwg6HP7h-U0stR4",
+          "mode": "list",
+          "cachedResultName": "sheet 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-Y5KYUyXcScOngXltg-uGeIMshNtJwg6HP7h-U0stR4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-Y5KYUyXcScOngXltg-uGeIMshNtJwg6HP7h-U0stR4/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "9217abe9-7a33-4fb3-80bc-5ca226204150",
+      "name": "Read Candidates",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        288
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2i69Pg9R2znruKha",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// --- Read candidate fields (trim safely) ---\nconst c = $json;\nconst get = (k) => (c[k] === undefined || c[k] === null ? '' : String(c[k]).trim());\n\nconst name = get('Name');\nconst email = get('Email');\nconst degree = get('Degree');\nconst skills = get('Skills');\nconst experience = get('Experience');\nconst availability = get('Availability');\n\n// --- Validate required fields ---\nconst required = { Name: name, Email: email, Degree: degree, Skills: skills, Experience: experience, Availability: availability };\nconst missing = Object.keys(required).filter((k) => required[k] === '');\nconst emailValid = /^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email);\nif (!emailValid && email !== '') missing.push('Email (invalid format)');\n\n// --- Derived screening metrics ---\n// Skills count (comma / slash / semicolon separated)\nconst skillsCount = skills === '' ? 0 : skills.split(/[,;/]/).map((s) => s.trim()).filter(Boolean).length;\n// Experience years — take first number found, supports \"4 years\", \"1.5 yrs\", \"18 months\"\nlet expYears = 0;\nconst numMatch = experience.match(/[\\d.]+/);\nif (numMatch) {\n  const val = parseFloat(numMatch[0]);\n  expYears = /month/i.test(experience) ? val / 12 : val;\n}\n// Availability: treat immediate / 1 month as available soon\nconst availSoon = /(immediate|now|1 month|2 weeks|available)/i.test(availability);\n\n// --- Apply screening rules -> category ---\nlet category;\nlet reason;\nif (missing.length > 0) {\n  category = 'Incomplete';\n  reason = 'Missing or invalid required fields: ' + missing.join(', ');\n} else if (expYears >= 2 && skillsCount >= 3) {\n  category = 'Shortlisted';\n  reason = `Strong profile: ${expYears} yr(s) experience, ${skillsCount} skills.`;\n} else if (expYears >= 1 || skillsCount >= 2) {\n  category = 'On Hold';\n  reason = `Partial match: ${expYears} yr(s) experience, ${skillsCount} skills.`;\n} else {\n  category = 'Rejected';\n  reason = `Below threshold: ${expYears} yr(s) experience, ${skillsCount} skills.`;\n}\n\nreturn {\n  json: {\n    ...c,\n    skillsCount,\n    experienceYears: Math.round(expYears * 10) / 10,\n    availableSoon: availSoon,\n    Category: category,\n    Status: category,\n    Notes: reason,\n    ScreenedAt: new Date().toISOString(),\n  },\n};"
+      },
+      "id": "8e20ceee-7e1f-443f-9162-ccfd18374124",
+      "name": "Validate & Categorize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "spreadsheet",
+        "options": {}
+      },
+      "id": "07444ffb-fcaf-4742-9e6e-6d2c33ee3f30",
+      "name": "Update Result",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        288
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2i69Pg9R2znruKha",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $(\"Validate & Categorize\").item.json.Category }}",
+                    "rightValue": "Shortlisted",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Shortlisted"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $(\"Validate & Categorize\").item.json.Category }}",
+                    "rightValue": "On Hold",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "On Hold"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $(\"Validate & Categorize\").item.json.Category }}",
+                    "rightValue": "Rejected",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Rejected"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Incomplete"
+        }
+      },
+      "id": "057d69a0-12b8-48df-a579-f814cfd4e3ad",
+      "name": "Categorize Candidate",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $(\"Validate & Categorize\").item.json.Email }}",
+        "subject": "=Congratulations {{ $(\"Validate & Categorize\").item.json.Name }} — You have been shortlisted",
+        "message": "=<p>Dear {{ $(\"Validate & Categorize\").item.json.Name }},</p><p>We are pleased to inform you that your profile has been <b>shortlisted</b> for the next stage of our hiring process at Petalnex Pvt. Ltd.</p><p>Our team will reach out shortly to schedule an interview.</p><p>Best regards,<br/>Petalnex Recruitment Team</p>",
+        "options": {}
+      },
+      "id": "06da52b9-b7b3-42cf-8576-cf24dc8d6528",
+      "name": "Email — Shortlisted",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        0
+      ],
+      "webhookId": "68bf0e32-0608-4957-b380-3074f4b70f91",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OJab61aDNoh5Q42u",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $(\"Validate & Categorize\").item.json.Email }}",
+        "subject": "=Update on your application, {{ $(\"Validate & Categorize\").item.json.Name }}",
+        "message": "=<p>Dear {{ $(\"Validate & Categorize\").item.json.Name }},</p><p>Thank you for applying to Petalnex Pvt. Ltd. Your application is currently <b>on hold</b> while we review candidates for the role.</p><p>We will keep your profile on file and contact you if a suitable opportunity arises.</p><p>Best regards,<br/>Petalnex Recruitment Team</p>",
+        "options": {}
+      },
+      "id": "9865d6d5-ae91-4298-b488-da67a12688fc",
+      "name": "Email — On Hold",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        192
+      ],
+      "webhookId": "a9b73301-0f7f-4216-b7c8-baa27b5e59c3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OJab61aDNoh5Q42u",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $(\"Validate & Categorize\").item.json.Email }}",
+        "subject": "=Your application to Petalnex Pvt. Ltd.",
+        "message": "=<p>Dear {{ $(\"Validate & Categorize\").item.json.Name }},</p><p>Thank you for your interest in Petalnex Pvt. Ltd. After careful review, we have decided not to move forward with your application at this time.</p><p>We wish you the very best in your job search.</p><p>Best regards,<br/>Petalnex Recruitment Team</p>",
+        "options": {}
+      },
+      "id": "0063fe8d-8967-42aa-9941-01e5c265980a",
+      "name": "Email — Rejected",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        384
+      ],
+      "webhookId": "d87ea2d3-ac88-4006-ae7b-0eb653f0dacf",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OJab61aDNoh5Q42u",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $(\"Validate & Categorize\").item.json.Email }}",
+        "subject": "=Action needed: complete your application, {{ $(\"Validate & Categorize\").item.json.Name }}",
+        "message": "=<p>Dear {{ $(\"Validate & Categorize\").item.json.Name }},</p><p>We could not fully process your application because some required information is missing or invalid.</p><p><b>Details:</b> {{ $(\"Validate & Categorize\").item.json.Notes }}</p><p>Please resubmit your application with all required fields completed.</p><p>Best regards,<br/>Petalnex Recruitment Team</p>",
+        "options": {}
+      },
+      "id": "2d4b5c17-bce3-4c85-bea5-a8402769b202",
+      "name": "Email — Incomplete",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        576
+      ],
+      "webhookId": "961381f8-8f5c-4729-b3a7-2991cfbff1ec",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "OJab61aDNoh5Q42u",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start Screening": {
+      "main": [
+        [
+          {
+            "node": "Read Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Candidates": {
+      "main": [
+        [
+          {
+            "node": "Validate & Categorize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & Categorize": {
+      "main": [
+        [
+          {
+            "node": "Update Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Result": {
+      "main": [
+        [
+          {
+            "node": "Categorize Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Categorize Candidate": {
+      "main": [
+        [
+          {
+            "node": "Email — Shortlisted",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email — On Hold",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email — Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email — Incomplete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "41a79dbd-05a8-46dc-9c7c-b3e4fb922f83",
+  "meta": {
+    "instanceId": "4c0325b2fdb15da78159c0e7778935fab29e1d75bed64182782c139929f6a16d"
+  },
+  "nodeGroups": [],
+  "id": "Wjv1xge0pup3TXXB",
+  "tags": []
+}
