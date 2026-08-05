@@ -1,0 +1,179 @@
+{
+  "name": "My workflow 3",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -208,
+        -32
+      ],
+      "id": "7a1c39fd-ea81-4222-97f1-708fb5b5ed30",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://api.open-meteo.com/v1/forecast?latitude=31.5204&longitude=74.3587&daily=weather_code&timezone=auto",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        0,
+        -32
+      ],
+      "id": "0421aa07-1ce3-4e17-9c3f-7752dd30612a",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5f665465-5251-4d46-b026-d55b8a7c5135",
+              "name": "weatherCode",
+              "value": "={{$json.daily.weather_code[0]}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        208,
+        -32
+      ],
+      "id": "920fabf8-9811-4e2e-9f6c-0a9cee3f7a07",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2868ef77-4c7a-4ac9-9fcf-3688a6891c2d",
+              "leftValue": "={{$json.weatherCode}}",
+              "rightValue": "95",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        -32
+      ],
+      "id": "adc70f6e-969f-4a52-b0f5-c5d0742aa24e",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "saniasohail889@gmail.com",
+        "subject": "Weather Alert",
+        "emailType": "text",
+        "message": "Rain is expected today – please carry an umbrella.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        656,
+        -160
+      ],
+      "id": "472785e5-6a65-42f8-ae41-ac4d3dba9538",
+      "name": "Send a message",
+      "webhookId": "250f8730-3dcf-46ad-9bfb-fbae15547e23",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vIo6BuJ38IsMNKd3",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5a437b65-6afb-4541-9c6a-fea7824fd510",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4c0325b2fdb15da78159c0e7778935fab29e1d75bed64182782c139929f6a16d"
+  },
+  "nodeGroups": [],
+  "id": "TQX6WyMZyCywhXkj",
+  "tags": []
+}
