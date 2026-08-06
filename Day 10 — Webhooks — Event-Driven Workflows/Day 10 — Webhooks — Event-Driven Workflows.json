@@ -1,0 +1,248 @@
+{
+  "name": "Day 10 — Webhooks — Event-Driven Workflows",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "form-submission",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -240,
+        0
+      ],
+      "id": "5aa756ea-af1d-4b44-84a7-6bc7a386fe6a",
+      "name": "Webhook",
+      "webhookId": "b7d007a7-ff48-412f-a3ea-20e31e03e2c7"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e7b5f778-829e-45fe-ae5b-dace7d952d62",
+              "name": "Name",
+              "value": "Noor-ul-Huda",
+              "type": "string"
+            },
+            {
+              "id": "f226daf9-d934-48e3-8c0e-c4891ea5d33d",
+              "name": "Email",
+              "value": "noor@example.com",
+              "type": "string"
+            },
+            {
+              "id": "bc9bf89d-46f2-416c-9cbd-fbf85767e5ef",
+              "name": "Message",
+              "value": "Hello from Postman",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -32,
+        0
+      ],
+      "id": "71007fb9-57ea-4e43-9b2c-20f89b62abc4",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c421cc66-19a1-4ecc-a502-07dae6d01bd2",
+              "leftValue": "={{ $json.Email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        176,
+        0
+      ],
+      "id": "40ee3d6d-2d07-4445-a48b-a362747efefe",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Emh5ZXi8ouWdUh6sLHwB5AA37pYCUDSyKcl3Zi2DNqQ",
+          "mode": "list",
+          "cachedResultName": "sheet 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Emh5ZXi8ouWdUh6sLHwB5AA37pYCUDSyKcl3Zi2DNqQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Emh5ZXi8ouWdUh6sLHwB5AA37pYCUDSyKcl3Zi2DNqQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.Name }}",
+            "Email": "={{ $json.Email }}",
+            "Message": "={{ $json.Message }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        384,
+        -51
+      ],
+      "id": "486da400-2fd7-4605-b9f8-97d3afbde029",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2i69Pg9R2znruKha",
+          "name": "Google Sheets account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "saniasohail889@gmail.com",
+        "subject": "Form Submission Confirmation",
+        "message": "Hello,  Thank you for submitting your information.  Your form has been received successfully and saved in our system.  Regards, AI Automation Internship",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        592,
+        -48
+      ],
+      "id": "4ec6f5b5-5874-4e88-9cf5-55f0ffbe8da5",
+      "name": "Send a message1",
+      "webhookId": "6cbb54da-f220-46af-aaa6-d95cf5601c4b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "wQDIPW5h8lc9n3qg",
+          "name": "Gmail account 5"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "41a744f7-76d4-42c2-bbb2-ea4e769eb533",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4c0325b2fdb15da78159c0e7778935fab29e1d75bed64182782c139929f6a16d"
+  },
+  "nodeGroups": [],
+  "id": "cZ4t6gXdW56KNJoe",
+  "tags": []
+}
