@@ -1,0 +1,23 @@
+## Before Sample Data
+
+| Name | Email | Score |
+|------|-------|------:|
+| noor-ul-huda | NOOR@EXAMPLE.COM | 92 |
+| ali KHAN | ALI@EXAMPLE.COM | 85 |
+| sara ahmed | SARA@EXAMPLE.COM | 78 |
+| HAMZA | HAMZA@EXAMPLE.COM | 65 |
+| ayesha | AYESHA@EXAMPLE.COM | 55 |
+
+---
+
+## After Sample Data
+
+| Name | Email | Score | Grade |
+|------|-------|------:|:-----:|
+| Noor-ul-Huda | noor@example.com | 92 | A |
+| Ali Khan | ali@example.com | 85 | B |
+| Usman Ali | usman@example.com | 88 | B |
+| Zain | zain@example.com | 81 | B |
+| Hassan | hassan@example.com | 95 | A |
+| Amna | amna@example.com | 84 | B |
+| Daniyal | daniyal@example.com | 90 | A |
