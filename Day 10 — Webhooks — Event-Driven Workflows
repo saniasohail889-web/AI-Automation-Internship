@@ -1,0 +1,100 @@
+# Webhook Form Submission Automation
+
+## Project Name
+
+Webhook Form Submission Automation using n8n
+
+---
+
+## Objective
+
+The objective of this project is to build an event-driven workflow using the n8n Webhook node. The workflow receives form data through a webhook, validates the submitted information, stores it in Google Sheets, and sends a confirmation email to the user.
+
+---
+
+## Workflow
+
+Webhook → Edit Fields → IF (Validate Data) → Google Sheets → Gmail
+
+---
+
+## Features
+
+- Receive form data using a Webhook
+- Validate submitted information
+- Save submitted data to Google Sheets
+- Send a confirmation email to the user
+- Test the workflow using Postman
+
+---
+
+## Technologies Used
+
+- n8n
+- Postman
+- Google Sheets
+- Gmail
+- Webhook
+
+---
+
+## Workflow Description
+
+1. The Webhook node receives a POST request from Postman.
+2. The Edit Fields node organizes the submitted data.
+3. The IF node validates the submitted information.
+4. Valid data is appended as a new row in Google Sheets.
+5. A confirmation email is sent to the submitted email address.
+
+---
+
+## Sample POST Request
+
+```json
+{
+  "Name": "Noor-ul-Huda",
+  "Email": "noor@example.com",
+  "Message": "Hello from Postman"
+}
+```
+
+---
+
+## Sample Saved Record
+
+| Name | Email | Message |
+|------|-------|---------|
+| Noor-ul-Huda | noor@example.com | Hello from Postman |
+
+---
+
+## Sample Confirmation Email
+
+**Subject**
+
+```
+Form Submission Confirmation
+```
+
+**Message**
+
+```
+Hello,
+
+Thank you for submitting your information.
+
+Your form has been received successfully and saved in our system.
+
+Regards,
+AI Automation Internship
+```
+
+---
+
+## Conclusion
+
+This project demonstrates how to build an event-driven automation workflow using n8n Webhooks. The workflow accepts form submissions, validates the input, stores the information in Google Sheets, and automatically sends a confirmation email. It shows how multiple services can work together to automate a complete data collection process.
+
+---
+
+AI Automation Internship – Day 10 Assignment
