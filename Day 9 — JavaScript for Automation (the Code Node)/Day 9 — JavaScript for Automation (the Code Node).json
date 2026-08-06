@@ -1,0 +1,55 @@
+{
+  "name": "Day 9 — JavaScript for Automation (the Code Node)",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        -48
+      ],
+      "id": "b724b373-ded5-45de-b797-451719337533",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = [\n  { name: \"  noor-ul-huda \", email: \"NOOR@EXAMPLE.COM\", score: 92 },\n  { name: \"ali KHAN\", email: \"ALI@EXAMPLE.COM\", score: 85 },\n  { name: \" sara ahmed \", email: \"SARA@EXAMPLE.COM\", score: 78 },\n  { name: \"HAMZA\", email: \"HAMZA@EXAMPLE.COM\", score: 65 },\n  { name: \" ayesha \", email: \"AYESHA@EXAMPLE.COM\", score: 55 },\n  { name: \"usman ali\", email: \"USMAN@EXAMPLE.COM\", score: 88 },\n  { name: \" FATIMA \", email: \"FATIMA@EXAMPLE.COM\", score: 73 },\n  { name: \"zain\", email: \"ZAIN@EXAMPLE.COM\", score: 81 },\n  { name: \"MARYAM\", email: \"MARYAM@EXAMPLE.COM\", score: 69 },\n  { name: \" hassan \", email: \"HASSAN@EXAMPLE.COM\", score: 95 },\n  { name: \"amna\", email: \"AMNA@EXAMPLE.COM\", score: 84 },\n  { name: \"bilal\", email: \"BILAL@EXAMPLE.COM\", score: 58 },\n  { name: \"iqra\", email: \"IQRA@EXAMPLE.COM\", score: 76 },\n  { name: \"DANIYAL\", email: \"DANIYAL@EXAMPLE.COM\", score: 90 },\n  { name: \"maham\", email: \"MAHAM@EXAMPLE.COM\", score: 62 }\n];\n\nfunction titleCase(str) {\n  return str\n    .trim()\n    .toLowerCase()\n    .split(\" \")\n    .map(word => word.charAt(0).toUpperCase() + word.slice(1))\n    .join(\" \");\n}\n\nconst transformed = data.map(person => {\n  let grade;\n\n  if (person.score >= 90) grade = \"A\";\n  else if (person.score >= 80) grade = \"B\";\n  else if (person.score >= 70) grade = \"C\";\n  else if (person.score >= 60) grade = \"D\";\n  else grade = \"F\";\n\n  return {\n    name: titleCase(person.name),\n    email: person.email.toLowerCase(),\n    score: person.score,\n    grade\n  };\n});\n\nconst filtered = transformed.filter(person =>\n  person.grade === \"A\" || person.grade === \"B\"\n);\n\nreturn filtered.map(item => ({\n  json: item\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        48,
+        0
+      ],
+      "id": "a715cdb2-349a-4bc2-bf01-92f56a0ff670",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "159b0cd2-8ad9-4862-a244-931949f5f870",
+  "meta": {
+    "instanceId": "4c0325b2fdb15da78159c0e7778935fab29e1d75bed64182782c139929f6a16d"
+  },
+  "nodeGroups": [],
+  "id": "28ksXn27xQwkUmxT",
+  "tags": []
+}
