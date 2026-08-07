@@ -1,0 +1,332 @@
+{
+  "name": "Day 11 — Multi-System Integration",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-lead",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "abb099c1-6d00-4d28-8cfd-7e3a5be128df",
+      "name": "Webhook",
+      "webhookId": "1c601265-134f-4a54-bf83-46011cadd249"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1fc3d38f-c8e6-4228-8807-f9ef9cead744",
+              "name": "Name",
+              "value": "=Noor-ul-Huda",
+              "type": "string"
+            },
+            {
+              "id": "4aa9085b-8632-49d9-9255-89f8742dd72b",
+              "name": "Email",
+              "value": "noor@example.com",
+              "type": "string"
+            },
+            {
+              "id": "80a57cf7-e61d-4001-99da-f337511e4a78",
+              "name": "City",
+              "value": "Karachi",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        192,
+        -16
+      ],
+      "id": "9159bfa0-21a4-4f4f-92c6-5c6164174686",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0bc0611e-4e0a-4698-91f0-a5d461d97237",
+              "leftValue": "Email",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        400,
+        -16
+      ],
+      "id": "bfd75690-12ab-4d91-b294-399152918f41",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "https://api.agify.io",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "Noor-ul-Huda"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        608,
+        -32
+      ],
+      "id": "ea869986-57b0-4a43-aa9c-81a60d3ec097",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "resource": "spreadsheet",
+        "title": "Lead Processing",
+        "sheetsUi": {
+          "sheetValues": [
+            {
+              "title": "sheet 1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        816,
+        -32
+      ],
+      "id": "2bed1981-2100-4c49-8d27-f374ff54fac8",
+      "name": "Create spreadsheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ympQ0nuWdLaxsCdB",
+          "name": "Google Sheets account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1lkGNoIjOsVmoBkmvGz1eh7_Tj8ty6UsbZbqRi28GEtQ",
+          "mode": "list",
+          "cachedResultName": "sheet 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lkGNoIjOsVmoBkmvGz1eh7_Tj8ty6UsbZbqRi28GEtQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lkGNoIjOsVmoBkmvGz1eh7_Tj8ty6UsbZbqRi28GEtQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "Noor-ul-Huda",
+            "Email": "noor@example.com",
+            "City": "Karachi",
+            "Predicted Age": "37"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Predicted Age",
+              "displayName": "Predicted Age",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1024,
+        -32
+      ],
+      "id": "2261805a-c102-4796-bd4b-818a4bbbb6a0",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GmyQ06Z5MCd3fXY7",
+          "name": "Google Sheets account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "saniasohail889@gmail.com",
+        "subject": "New Lead Received",
+        "emailType": "text",
+        "message": "=Hello,  A new lead has been received.  Name: Noor-ul-Huda Email: noor@example.com City: Karachi Predicted Age: {{ $('HTTP Request').item.json.age }}  Regards, Sales Automation System",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1232,
+        -32
+      ],
+      "id": "e579f7f1-9aa9-4f90-9c1a-cccc09eb4fa3",
+      "name": "Send a message",
+      "webhookId": "57f231f3-f383-473e-bd6b-6a8ef3393092",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "frOhhaDYeKxg4CXy",
+          "name": "Gmail account 6"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Create spreadsheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create spreadsheet": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "9871e8c5-613a-4365-bc44-9dcb21a54a02",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4c0325b2fdb15da78159c0e7778935fab29e1d75bed64182782c139929f6a16d"
+  },
+  "nodeGroups": [],
+  "id": "bdATQDCpKfBJxmOD",
+  "tags": []
+}
