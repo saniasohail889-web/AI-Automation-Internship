@@ -1,0 +1,443 @@
+{
+  "name": "Day 15 - AI Email Classification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "day15-email-classification",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -272,
+        -64
+      ],
+      "id": "c0a50baf-a517-4122-8564-d5cce27d6dd8",
+      "name": "Webhook",
+      "webhookId": "cd1b7edd-d98b-44f2-abdd-fa5a0f0eca3a"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an AI Email Classification Assistant.\n\nClassify the email into exactly ONE of these categories:\n\nSales\nSupport\nComplaint\nInvoice\nSpam\nGeneral\n\nRULES:\n- Sales = product, service, pricing, package, purchase, or sales inquiries.\n- Support = technical help or assistance with an existing service.\n- Complaint = dissatisfaction or a negative experience.\n- Invoice = invoices, billing, payments, or receipts.\n- Spam = unwanted, suspicious, or irrelevant messages.\n- General = anything that does not clearly fit the other categories.\n\nReturn ONLY the category name.\nDo not provide an explanation.\nDo not use markdown.\n\nEMAIL:\n\nSubject: {{$json.body.subject}}\n\nFrom: {{$json.body.from}}\n\nBody: {{$json.body.body}}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -64,
+        -64
+      ],
+      "id": "4ebd694f-b8c7-4d27-9aba-41ad3d57c5d9",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        144
+      ],
+      "id": "4dc5347d-c10c-46a9-a32a-8bbb734c9d99",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "SjHDXi3Y5BnGJT5J",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.text.toLowerCase().trim()}}",
+                    "rightValue": "sales",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "a07eb5c4-0c93-4038-8bb1-d22a6ee96e48"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "01f6c078-741d-4403-9aaf-221458c2f54c",
+                    "leftValue": "={{$json.text.toLowerCase().trim()}}",
+                    "rightValue": "support",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "afd6b542-2ee6-4c4a-bb56-57b67a329048",
+                    "leftValue": "={{$json.text.toLowerCase().trim()}}",
+                    "rightValue": "invoice",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "13b04fe6-0805-486d-80dd-80afce42929e",
+                    "leftValue": "={{$json.text.toLowerCase().trim()}}",
+                    "rightValue": "spam",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ed74db5a-2483-48be-b12a-b26ab7ceb897",
+                    "leftValue": "={{$json.text.toLowerCase().trim()}}",
+                    "rightValue": "general",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "56ea0e82-2ffd-46c3-af3c-6be36773d310",
+                    "leftValue": "={{$json.text.toLowerCase().trim()}}",
+                    "rightValue": "complaint",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        288,
+        -64
+      ],
+      "id": "a04c62da-f8dd-4a49-a536-4bb6b307cec3",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b8c430dc-3850-4502-921e-d4667b614a7d",
+              "name": "category",
+              "value": "sales",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        496,
+        -304
+      ],
+      "id": "49c1aaf7-af97-4825-acaa-85cae7501822",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "aad2a600-3545-45cc-9ce8-60045ea54e1d",
+              "name": "category",
+              "value": "support",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        736,
+        -192
+      ],
+      "id": "71099466-37ec-4207-9cc1-c38b8e4b705e",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7ad628ff-2248-426e-ae67-1b727b643a80",
+              "name": "category",
+              "value": "invoice",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        816,
+        16
+      ],
+      "id": "ad3722e2-1fb4-4b09-9c2a-ccc5d58fab90",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "736b7153-939f-44e7-83d7-be9d1151b574",
+              "name": "category",
+              "value": "spam",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        896,
+        240
+      ],
+      "id": "0a6ab933-9794-4404-baf9-3a8a6a544233",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "121ffa73-6c9d-4257-ab62-1d757a7e7f6d",
+              "name": "category",
+              "value": "general",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        704,
+        384
+      ],
+      "id": "776401a1-b61e-4f8e-988e-88a046fe725d",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ac46d6b9-0a75-4a62-b19f-51af8aba14b4",
+              "name": "category",
+              "value": "complaint",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        304,
+        368
+      ],
+      "id": "bdb2de88-722a-4f5e-833b-5f119bd967aa",
+      "name": "Edit Fields5"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5b6a294c-ff5a-49fe-9e3e-f64b7a108978",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4c0325b2fdb15da78159c0e7778935fab29e1d75bed64182782c139929f6a16d"
+  },
+  "nodeGroups": [],
+  "id": "e0whj7M9K8ya8ekd",
+  "tags": []
+}
