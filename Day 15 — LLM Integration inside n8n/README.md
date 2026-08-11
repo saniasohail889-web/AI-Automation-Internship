@@ -41,15 +41,15 @@ The workflow was tested with different email examples.
 
 Successful classifications included:
 
-- Sales
+- General
 - Support
-- Complaint
+- Invoice
 
 Additional categories configured in the Switch node:
 
-- Invoice
+- Sales
 - Spam
-- General
+- Complaint
 
 ## Result
 
