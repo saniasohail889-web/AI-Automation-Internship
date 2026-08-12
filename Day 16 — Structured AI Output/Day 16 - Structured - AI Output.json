@@ -1,0 +1,298 @@
+{
+  "name": "Day 16 - Structured - AI Output",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        -80
+      ],
+      "id": "d1240a57-5b39-4979-be9a-59f76673760c",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5ce1236b-d70a-4a61-9059-acb07cbec050",
+              "name": "TEST_INVALID I don't know if this is about my order, account, payment, or something else.",
+              "value": "I don't know if this is about my order, account, payment, or something else. The website acted strange and now I'm not sure what happened.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        16,
+        -96
+      ],
+      "id": "74773b86-1559-455d-acc1-0bbafe17a332",
+      "name": "Test Input"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a customer support classification assistant.\n\nAnalyze the customer message provided below.\n\nReturn the information according to the structured output schema.\n\nCustomer message:\n{{ $json.input }}\n\nDo not add explanations or extra information.\n\nIf the customer message contains the text TEST_INVALID, deliberately return:\npriority: \"Unknown\"",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        224,
+        -96
+      ],
+      "id": "8de8ac25-4cb6-43dd-b9b8-0dce72ee6b21",
+      "name": "Basic LLM Chain",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"category\": {\n      \"type\": \"string\"\n    },\n    \"priority\": {\n      \"type\": \"string\"\n    },\n    \"sentiment\": {\n      \"type\": \"string\"\n    },\n    \"department\": {\n      \"type\": \"string\"\n    },\n    \"summary\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"category\",\n    \"priority\",\n    \"sentiment\",\n    \"department\",\n    \"summary\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        368,
+        112
+      ],
+      "id": "9a2c564e-bf4d-4962-aa5a-d0b13eab9b6b",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        112,
+        112
+      ],
+      "id": "e034d4f3-4e7f-416f-ad20-e63ec65a32a0",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "xw52IsvefuzJTW4x",
+          "name": "Groq account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dfedc51a-2db1-4bbb-ae2e-314718bf9030",
+              "name": "=is_valid",
+              "value": "={{\n$json.output.category !== undefined &&\n$json.output.priority !== undefined &&\n$json.output.sentiment !== undefined &&\n$json.output.department !== undefined &&\n$json.output.summary !== undefined &&\n[\"Low\",\"Medium\",\"High\"].includes($json.output.priority) &&\n[\"Positive\",\"Neutral\",\"Negative\"].includes($json.output.sentiment) &&\n$json.output.summary !== \"\"\n}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        576,
+        -96
+      ],
+      "id": "6b112ee0-f8b3-42dd-b36f-478c69a2ed1b",
+      "name": "Validate Output"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "16cb3bf6-74c3-4441-8241-72e06ad635fb",
+              "leftValue": "={{ $json.is_valid }}",
+              "rightValue": "=true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        784,
+        -96
+      ],
+      "id": "1ec33abd-6a35-46f4-9538-c39b980fc333",
+      "name": "Valid Output?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9be3f770-97aa-47f2-8733-f9fd3cfa460d",
+              "name": "status",
+              "value": "=Valid AI Output",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        992,
+        -128
+      ],
+      "id": "1847436d-3ffd-4a76-856d-018f739aec69",
+      "name": "Success"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "de64a423-9e4f-4ad8-8550-e6b0163dcc8b",
+              "name": "status",
+              "value": "Fallback Triggered",
+              "type": "string"
+            },
+            {
+              "id": "3cf8661c-8b1e-4e18-a8c9-08402bbcb24c",
+              "name": "message",
+              "value": "Unable to classify the input reliably. Manual review required.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        960,
+        64
+      ],
+      "id": "81aab105-ebd8-408d-8adb-9160c79f445b",
+      "name": "Fallback"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Test Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test Input": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Validate Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Output": {
+      "main": [
+        [
+          {
+            "node": "Valid Output?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Output?": {
+      "main": [
+        [
+          {
+            "node": "Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "9e3392d4-7b0d-4bf3-b16e-2617612b6b6c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4c0325b2fdb15da78159c0e7778935fab29e1d75bed64182782c139929f6a16d"
+  },
+  "nodeGroups": [],
+  "id": "jyfJ1DYd7THOQGQA",
+  "tags": []
+}
