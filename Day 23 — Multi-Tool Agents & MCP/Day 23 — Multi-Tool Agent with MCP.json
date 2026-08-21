@@ -1,0 +1,301 @@
+{
+  "name": "Day 23 — Multi-Tool Agent with MCP",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "responseMode": "streaming"
+        }
+      },
+      "id": "de9828ad-09cf-40f2-9e3c-7daa43e266a2",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        112
+      ],
+      "webhookId": "38f0323c-8d2d-4f1e-aff1-51cef53bbe9c"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a customer-support operations assistant with several tools. Pick the RIGHT tool for each request:\n\n- calculator: pure arithmetic and math only.\n- get_exchange_rate: live currency exchange rates between two ISO currency codes. Use it for any money conversion, then use calculator for the multiplication.\n- lookup_orders: READ-ONLY lookups in the customer_orders data store (by order_id, customer_email, product, or status). Always look up before answering questions about an order.\n- remote_mcp_tools: tools exposed by the DeepWiki remote MCP server for answering questions about public GitHub repositories (read_wiki_structure, read_wiki_contents, ask_question). Use these when the user asks about a GitHub repo or open-source project.\n- update_order_status: SENSITIVE write that permanently changes an order in the data store.\n\nBOUNDARIES — what you may do autonomously vs. what needs a human:\n- You may freely use calculator, get_exchange_rate, lookup_orders and read-only remote tools without asking.\n- update_order_status (and any other data-modifying or irreversible action) requires EXPLICIT human confirmation FIRST.\n  Before any such change: state the exact order_id and the new value, ask the user to confirm, and WAIT.\n  Only after the user replies with a clear confirmation may you call update_order_status. If they decline or are unclear, do not make the change.\n\nBe concise. If no tool fits, answer directly and say so."
+        }
+      },
+      "id": "e6f17cf2-3752-414b-8ac7-348e0fda484e",
+      "name": "Multi-Tool Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        544,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "e0136968-e457-4a2d-823f-429930461d41",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        336
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "yRJZVc5tNAVjKR9W",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "6a6d5558-eb80-444f-8552-1c1421a6f2c6",
+      "name": "calculator",
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        480,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "TCgaBecuLgxtivxp",
+          "cachedResultName": "customer_orders"
+        },
+        "matchType": "allConditions",
+        "returnAll": true
+      },
+      "id": "eb8de8cd-fe15-4f9e-8ca0-afdc39cdfb11",
+      "name": "lookup_orders",
+      "type": "n8n-nodes-base.dataTableTool",
+      "typeVersion": 1.1,
+      "position": [
+        784,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "endpointUrl": "https://mcp.deepwiki.com/mcp",
+        "include": "selected",
+        "includeTools": [
+          "ask_question"
+        ],
+        "options": {}
+      },
+      "id": "13cdc68b-65e0-4e56-87f7-7d67608f1244",
+      "name": "remote_mcp_tools",
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.4,
+      "position": [
+        944,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "TCgaBecuLgxtivxp",
+          "cachedResultName": "customer_orders"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "order_id"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "order_id"
+          ],
+          "value": {}
+        },
+        "options": {}
+      },
+      "id": "decec112-a492-410d-ac57-0b755743dd95",
+      "name": "update_order_status",
+      "type": "n8n-nodes-base.dataTableTool",
+      "typeVersion": 1.1,
+      "position": [
+        1088,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "id": "4e70d2c6-e401-4a32-8f1a-98a9388f4f15",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        368,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Get the latest currency exchange rate between two ISO 4217 currency codes (e.g. USD, EUR, GBP). Use ONLY for converting or comparing money across currencies. Inputs: from_currency (3-letter code of the source currency) and to_currency (3-letter code of the target currency). Returns a JSON object with the conversion rates. Do NOT use this for arithmetic — use the calculator tool for that.",
+        "url": "https://api.frankfurter.app/latest",
+        "sendQuery": true,
+        "parametersQuery": {
+          "values": [
+            {
+              "name": "from"
+            },
+            {
+              "name": "to"
+            }
+          ]
+        },
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "from",
+              "description": "Source currency ISO code, e.g. USD",
+              "type": "string"
+            },
+            {
+              "name": "to",
+              "description": "Target currency ISO code, e.g. EUR",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "b3914965-5ebe-4788-906e-327172f51954",
+      "name": "HTTP Request",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        608,
+        368
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Multi-Tool Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Multi-Tool Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "Multi-Tool Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "lookup_orders": {
+      "ai_tool": [
+        [
+          {
+            "node": "Multi-Tool Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "remote_mcp_tools": {
+      "ai_tool": [
+        [
+          {
+            "node": "Multi-Tool Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "update_order_status": {
+      "ai_tool": [
+        [
+          {
+            "node": "Multi-Tool Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Multi-Tool Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "ai_tool": [
+        [
+          {
+            "node": "Multi-Tool Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "0a7a6bfb-9a7d-46e5-bfb5-4ea817e54da2",
+  "meta": {
+    "instanceId": "8da2e8ae2330b36b5b047a6278b782a90483d2d9bab9ca4b43fdd586cbd3e987"
+  },
+  "nodeGroups": [],
+  "id": "JjbrmiVvHrTB4zr4",
+  "tags": []
+}
