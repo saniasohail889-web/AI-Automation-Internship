@@ -1,0 +1,173 @@
+{
+  "name": "Company Knowledge — Ingestion (Supabase)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "700751f5-2e76-4c86-937c-9bdfe36e558d",
+      "name": "Run Ingestion",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 24 company knowledge entries. One n8n item per entry.\nconst entries = [\n  { id: \"KB-001\", title: \"Company Overview\", category: \"Company\", source: \"Company Handbook v3, p.1\", content: \"Petalnex Pvt. Ltd. is an AI automation company founded in 2021, headquartered in Karachi, Pakistan, with a distributed team across South Asia. We build workflow automation and AI assistant solutions for small and mid-sized businesses. Our mission is to make intelligent automation accessible to every company.\" },\n  { id: \"KB-002\", title: \"Office Hours and Locations\", category: \"Company\", source: \"Company Handbook v3, p.4\", content: \"Our main office in Karachi is open Monday to Friday, 9:00 AM to 6:00 PM PKT. We operate a hybrid model: employees work from the office at least two days per week. Remote employees are expected to be reachable during core hours of 11:00 AM to 4:00 PM PKT.\" },\n  { id: \"KB-003\", title: \"Paid Time Off Policy\", category: \"HR\", source: \"HR Policy Manual, Section 2.1\", content: \"Full-time employees receive 20 days of paid annual leave, 10 days of sick leave, and 12 public holidays per year. Annual leave must be requested at least 5 working days in advance through the HR portal. Up to 5 unused annual leave days may be carried over to the next calendar year.\" },\n  { id: \"KB-004\", title: \"Parental Leave\", category: \"HR\", source: \"HR Policy Manual, Section 2.3\", content: \"Petalnex offers 12 weeks of paid maternity leave and 4 weeks of paid paternity leave. Employees must have completed at least 6 months of service to be eligible. Requests should be submitted to HR at least 30 days before the expected leave start date.\" },\n  { id: \"KB-005\", title: \"Remote Work Reimbursement\", category: \"HR\", source: \"HR Policy Manual, Section 4.2\", content: \"Remote employees are eligible for a monthly internet and home-office stipend of PKR 5,000. A one-time equipment allowance of PKR 40,000 is provided for a desk, chair, or monitor after successful completion of probation. Receipts must be submitted through the expense portal.\" },\n  { id: \"KB-006\", title: \"Expense Reimbursement Process\", category: \"Finance\", source: \"Finance SOP, Section 3\", content: \"Business expenses must be submitted within 30 days of purchase via the finance portal with a valid receipt. Expenses under PKR 20,000 are approved by your line manager; larger amounts require department-head approval. Reimbursements are processed in the next payroll cycle after approval.\" },\n  { id: \"KB-007\", title: \"Payroll Schedule\", category: \"Finance\", source: \"Finance SOP, Section 1\", content: \"Salaries are paid on the last working day of each month via bank transfer. Payslips are available in the HR portal by the 1st of the following month. Any payroll discrepancies should be reported to payroll@petalnex.com within 7 days of receiving your payslip.\" },\n  { id: \"KB-008\", title: \"Employee Onboarding\", category: \"HR\", source: \"Onboarding Guide, p.2\", content: \"New hires complete a 5-day onboarding program covering company tools, security training, and team introductions. IT provisions accounts and hardware on day one. Each new employee is assigned a buddy for their first 30 days and has a probation review at 90 days.\" },\n  { id: \"KB-009\", title: \"IT Support and Helpdesk\", category: \"IT\", source: \"IT Handbook, Section 1\", content: \"IT support is available Monday to Friday, 9:00 AM to 6:00 PM PKT. Raise tickets through the IT helpdesk portal or email support@petalnex.com. Priority-1 outages are acknowledged within 1 hour; standard requests are resolved within 2 business days.\" },\n  { id: \"KB-010\", title: \"Password and Account Security\", category: \"IT\", source: \"Security Policy, Section 2\", content: \"Passwords must be at least 12 characters with a mix of letters, numbers, and symbols, and must be changed every 90 days. Multi-factor authentication (MFA) is mandatory for all company accounts. Never share credentials; report suspected phishing to security@petalnex.com immediately.\" },\n  { id: \"KB-011\", title: \"VPN and Remote Access\", category: \"IT\", source: \"IT Handbook, Section 4\", content: \"Remote access to internal systems requires the company VPN with MFA. Install the VPN client from the IT portal and sign in with your SSO credentials. Access to production systems is restricted to authorized engineers and requires an approved access request.\" },\n  { id: \"KB-012\", title: \"Data Protection and Privacy\", category: \"Security\", source: \"Data Governance Policy, Section 1\", content: \"Petalnex classifies data as Public, Internal, Confidential, or Restricted. Customer data is treated as Confidential and must never be copied to personal devices or shared externally without a signed NDA. All customer data is encrypted in transit and at rest.\" },\n  { id: \"KB-013\", title: \"Acceptable Use Policy\", category: \"Security\", source: \"Security Policy, Section 5\", content: \"Company devices and accounts are for business use. Installing unlicensed software, disabling security tools, or accessing prohibited content is not allowed. Occasional personal use is permitted if it does not interfere with work or violate any policy.\" },\n  { id: \"KB-014\", title: \"Product: WorkflowIQ\", category: \"Product\", source: \"Product Catalog 2026, p.8\", content: \"WorkflowIQ is our flagship no-code automation platform that lets businesses connect apps and automate repetitive tasks. It includes 200+ integrations, a visual builder, and scheduling. Pricing starts at USD 29/month for the Starter plan.\" },\n  { id: \"KB-015\", title: \"Product: AssistAI\", category: \"Product\", source: \"Product Catalog 2026, p.12\", content: \"AssistAI is our RAG-based knowledge assistant that answers employee and customer questions from a company's own documents. It supports vector search, source citations, and chat interfaces including web, Slack, and Telegram. AssistAI is available on the Pro and Enterprise plans.\" },\n  { id: \"KB-016\", title: \"Pricing Plans\", category: \"Product\", source: \"Pricing Sheet 2026\", content: \"Petalnex offers three plans: Starter at USD 29/month, Pro at USD 99/month, and Enterprise with custom pricing. The Pro plan includes AssistAI, priority support, and up to 10 team members. Annual billing gives a 20% discount. A 14-day free trial is available for all plans.\" },\n  { id: \"KB-017\", title: \"Customer Support Channels\", category: \"Support\", source: \"Support Playbook, Section 1\", content: \"Customers can reach support via in-app chat, email at help@petalnex.com, or the help center. Standard support responds within 24 hours; Pro and Enterprise customers get priority responses within 4 hours. Phone support is available for Enterprise customers only.\" },\n  { id: \"KB-018\", title: \"Refund Policy\", category: \"Support\", source: \"Terms of Service, Section 7\", content: \"Customers may request a full refund within 14 days of the initial purchase if they are not satisfied. Refunds for annual plans are prorated after the 14-day window at the company's discretion. Refund requests are handled by the billing team and processed within 7 business days.\" },\n  { id: \"KB-019\", title: \"Service Level Agreement (SLA)\", category: \"Support\", source: \"Enterprise SLA v2\", content: \"For Enterprise customers, Petalnex guarantees 99.9% monthly uptime. If uptime falls below this threshold, customers are eligible for service credits: 10% for 99.0-99.9%, and 25% for below 99.0%. Planned maintenance is announced at least 48 hours in advance.\" },\n  { id: \"KB-020\", title: \"Code of Conduct\", category: \"HR\", source: \"Company Handbook v3, p.20\", content: \"All employees must treat colleagues, customers, and partners with respect. Harassment, discrimination, and retaliation are strictly prohibited. Violations can be reported confidentially to HR or through the anonymous ethics hotline. Petalnex maintains a zero-tolerance policy for harassment.\" },\n  { id: \"KB-021\", title: \"Performance Reviews\", category: \"HR\", source: \"HR Policy Manual, Section 6\", content: \"Performance reviews are conducted twice a year, in June and December. Reviews assess goals, competencies, and growth areas. Annual salary increments and promotions are decided in the December cycle based on performance ratings and business results.\" },\n  { id: \"KB-022\", title: \"Learning and Development\", category: \"HR\", source: \"HR Policy Manual, Section 7\", content: \"Each employee receives an annual learning budget of PKR 60,000 for courses, certifications, or conferences relevant to their role. Requests are approved by the line manager. Employees are encouraged to spend up to 4 hours per week on approved learning during work hours.\" },\n  { id: \"KB-023\", title: \"Travel Policy\", category: \"Finance\", source: \"Finance SOP, Section 5\", content: \"Business travel must be approved in advance by your manager. Economy class is standard for flights under 6 hours. Daily meal allowance for domestic travel is PKR 3,000 and for international travel USD 50. Book travel through the approved corporate portal whenever possible.\" },\n  { id: \"KB-024\", title: \"Incident Reporting and Escalation\", category: \"Security\", source: \"Incident Response Plan, Section 2\", content: \"Any security incident or data breach must be reported to security@petalnex.com within 1 hour of discovery. The incident response team triages severity and, for major incidents, notifies affected customers within 72 hours. Do not attempt to fix a suspected breach yourself; preserve evidence and follow the response team's instructions.\" }\n];\n\nreturn entries.map((e) => ({ json: { ...e, text: e.title + \"\\n\" + e.content } }));"
+      },
+      "id": "a3ba33a2-9ae3-48b0-ae95-3085269cfb80",
+      "name": "Company Knowledge Entries",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "documents",
+          "cachedResultName": "documents"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "id": "71a62433-07b9-4f22-9f92-e9daffe5adfa",
+      "name": "Store in Supabase",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        112
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Sia7OW5hhYWjy4Af",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "dimensions": 1536
+        }
+      },
+      "id": "48579987-b69d-4b84-ab56-3d6801ea163a",
+      "name": "OpenAI Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        464,
+        336
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "yRJZVc5tNAVjKR9W",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.text }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "id",
+                "value": "={{ $json.id }}"
+              },
+              {
+                "name": "title",
+                "value": "={{ $json.title }}"
+              },
+              {
+                "name": "category",
+                "value": "={{ $json.category }}"
+              },
+              {
+                "name": "source",
+                "value": "={{ $json.source }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "a410acd4-2914-4faa-aaa4-1a58c3529c6e",
+      "name": "KB Document Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        592,
+        336
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Run Ingestion": {
+      "main": [
+        [
+          {
+            "node": "Company Knowledge Entries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Company Knowledge Entries": {
+      "main": [
+        [
+          {
+            "node": "Store in Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Store in Supabase",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "KB Document Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Store in Supabase",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f30a6020-21e6-4b88-a1a6-315957b43379",
+  "meta": {
+    "instanceId": "8da2e8ae2330b36b5b047a6278b782a90483d2d9bab9ca4b43fdd586cbd3e987"
+  },
+  "nodeGroups": [],
+  "id": "NFbUuVf0bFGwySzf",
+  "tags": []
+}
