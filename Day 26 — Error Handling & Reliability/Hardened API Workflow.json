@@ -1,0 +1,297 @@
+{
+  "name": "Hardened API Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "c8d6398b-134c-4797-b011-737ac2877668",
+      "name": "Run Workflow",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://example.invalid/api",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          },
+          "timeout": 10000
+        }
+      },
+      "id": "d0070abe-0e97-46e9-b89b-aefe85342b8b",
+      "name": "API Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        192
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "status-ok",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 300,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "51c887a4-8159-4bcb-b067-6d04d190c11a",
+      "name": "Successful?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "status",
+              "name": "result",
+              "value": "success",
+              "type": "string"
+            },
+            {
+              "id": "payload",
+              "name": "data",
+              "value": "={{ JSON.stringify($json.body) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c1359cd6-05af-43a5-9e04-ed353736e93d",
+      "name": "Continue",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "DfMmQbjsMWKYMOdB",
+          "cachedResultName": "error_log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $now.toISO() }}",
+            "workflow_name": "={{ $workflow.name }}",
+            "workflow_id": "={{ $workflow.id }}",
+            "execution_id": "={{ $execution.id }}",
+            "failed_node": "API Request",
+            "error_message": "={{ $json.error?.message || $json.error?.code || $json.statusCode || 'API request failed' }}",
+            "execution_url": "={{ $execution.resumeUrl || '' }}"
+          },
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "date",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "workflow_name",
+              "displayName": "workflow_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "workflow_id",
+              "displayName": "workflow_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "failed_node",
+              "displayName": "failed_node",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "execution_url",
+              "displayName": "execution_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "66b5c026-1a58-4115-928d-8e9ccd2ddba7",
+      "name": "Log Error",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "saniasohail889@gmail.com",
+        "subject": "=[n8n] API Request failed in {{ $workflow.name }}",
+        "emailType": "text",
+        "message": "=The API Request step failed after retries.\n\nWorkflow: {{ $workflow.name }}\nExecution: {{ $execution.id }}\nStatus/Error: {{ $json.error?.message || $json.error?.code || $json.statusCode || 'API request failed' }}",
+        "options": {}
+      },
+      "id": "01ca31c9-60e7-49b7-98cb-993327a9a633",
+      "name": "Notify Admin",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        384
+      ],
+      "webhookId": "c9d5f0ae-72d4-4456-b71a-f0f7b0706cb7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "maPkYSWWsaUBGSH7",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Run Workflow": {
+      "main": [
+        [
+          {
+            "node": "API Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API Request": {
+      "main": [
+        [
+          {
+            "node": "Successful?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Error",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify Admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Successful?": {
+      "main": [
+        [
+          {
+            "node": "Continue",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Error",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify Admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "errorWorkflow": "QVfFLtAHpElybPSC"
+  },
+  "versionId": "1cb54d95-fb43-4501-851e-b5838e08a7a3",
+  "meta": {
+    "instanceId": "8da2e8ae2330b36b5b047a6278b782a90483d2d9bab9ca4b43fdd586cbd3e987"
+  },
+  "nodeGroups": [],
+  "id": "gv1x9ZQOfz4zFGU9",
+  "tags": []
+}

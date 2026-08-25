@@ -1,0 +1,167 @@
+{
+  "name": "Error Handler - Log & Alert",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "7f699ba9-4ee0-408e-bada-679f2a18f68e",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "DfMmQbjsMWKYMOdB",
+          "cachedResultName": "error_log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $now.toISO() }}",
+            "workflow_name": "={{ $json.workflow.name }}",
+            "workflow_id": "={{ $json.workflow.id }}",
+            "execution_id": "={{ $json.execution.id }}",
+            "failed_node": "={{ $json.execution.error.node.name }}",
+            "error_message": "={{ $json.execution.error.message }}",
+            "execution_url": "={{ $json.execution.url }}"
+          },
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "date",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "workflow_name",
+              "displayName": "workflow_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "workflow_id",
+              "displayName": "workflow_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "failed_node",
+              "displayName": "failed_node",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "execution_url",
+              "displayName": "execution_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5959fb0d-41af-4fee-a4ba-b6c0cf1506bc",
+      "name": "Log Error",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "saniasohail889@gmail.com",
+        "subject": "=[n8n] Workflow failed: {{ $json.workflow.name }}",
+        "emailType": "text",
+        "message": "=A workflow execution failed.\n\nWorkflow: {{ $json.workflow.name }} ({{ $json.workflow.id }})\nExecution: {{ $json.execution.id }}\nFailed node: {{ $json.execution.error.node.name }}\nError: {{ $json.execution.error.message }}\n\nExecution URL: {{ $json.execution.url }}",
+        "options": {}
+      },
+      "id": "0f57dfaf-78cf-446c-a812-019ff5349c00",
+      "name": "Notify Admin",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        192
+      ],
+      "webhookId": "44a51ef4-6bd4-4f32-a02d-8171e5b3ffed",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "maPkYSWWsaUBGSH7",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Log Error",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify Admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3c1f0356-5b05-4ee7-a4c9-0e1f4e5556e6",
+  "meta": {
+    "instanceId": "8da2e8ae2330b36b5b047a6278b782a90483d2d9bab9ca4b43fdd586cbd3e987"
+  },
+  "nodeGroups": [],
+  "id": "QVfFLtAHpElybPSC",
+  "tags": []
+}
