@@ -1,0 +1,416 @@
+{
+  "name": "Day 29 — Monitoring, Debugging & Optimization",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Refund Request",
+        "formDescription": "Submit a refund request. It will be reviewed before any refund is issued.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Customer Name",
+              "fieldName": "customer_name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Customer Email",
+              "fieldType": "email",
+              "fieldName": "customer_email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Order ID",
+              "fieldName": "order_id",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Refund Amount (USD)",
+              "fieldType": "number",
+              "fieldName": "amount",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Reason for Refund",
+              "fieldType": "textarea",
+              "fieldName": "reason",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "path": "refund-request",
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Thanks — your refund request has been received and is pending review."
+            }
+          }
+        }
+      },
+      "id": "d73ae615-bf80-4c7c-9dcc-41a2ce7a8c26",
+      "name": "Refund Request Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        112
+      ],
+      "webhookId": "89fd3ee7-4279-436e-8ba6-437da0915c22"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// --- Normalize inputs (humans write '≈ $12,500', '1.5k', etc.) ---\nconst raw = $json.amount;\nlet amount = 0;\nif (typeof raw === 'number') {\n  amount = raw;\n} else if (raw != null) {\n  let s = String(raw).trim().toLowerCase().replace(/[$,\\s]/g, '');\n  const k = s.endsWith('k');\n  if (k) s = s.slice(0, -1);\n  const n = parseFloat(s);\n  amount = isNaN(n) ? 0 : (k ? n * 1000 : n);\n}\n\nconst reason = ($json.reason == null ? '' : String($json.reason)).trim();\nconst words = reason ? reason.split(/\\s+/).length : 0;\n\n// --- Deterministic risk rules ---\nconst HIGH_AMOUNT = 500;\nconst MID_AMOUNT = 200;\nconst reasons = [];\nlet score = 0;\n\nif (amount >= HIGH_AMOUNT) { score += 2; reasons.push('Unusually high amount (>= $' + HIGH_AMOUNT + ')'); }\nelse if (amount >= MID_AMOUNT) { score += 1; reasons.push('Moderate amount (>= $' + MID_AMOUNT + ')'); }\n\nif (words < 4) { score += 2; reasons.push('Vague / very short reason (' + words + ' words)'); }\nelse if (words < 8) { score += 1; reasons.push('Somewhat brief reason (' + words + ' words)'); }\n\nif (amount <= 0) { score += 2; reasons.push('Missing or unparseable amount'); }\n\nconst abuseTerms = ['again', 'always', 'every time', 'chargeback', 'dispute', 'lawyer', 'scam'];\nconst lc = reason.toLowerCase();\nfor (const t of abuseTerms) { if (lc.includes(t)) { score += 1; reasons.push('Reason contains risk keyword: \"' + t + '\"'); } }\n\n// --- Derive recommendation + confidence from score ---\nlet risk_level, recommendation, confidence;\nif (score >= 3) { risk_level = 'High'; recommendation = 'Reject'; confidence = 'High'; }\nelse if (score >= 1) { risk_level = 'Medium'; recommendation = 'Reject'; confidence = 'Medium'; }\nelse { risk_level = 'Low'; recommendation = 'Approve'; confidence = 'High'; }\n\nif (reasons.length === 0) reasons.push('No risk factors detected');\nconst risk_reasons = reasons.join('; ');\n\nconst summary = 'Recommendation: ' + recommendation + '\\n' +\n  'Confidence: ' + confidence + '\\n' +\n  'Risk level: ' + risk_level + '\\n' +\n  'Reasoning: ' + risk_reasons;\n\n// Structured log line for execution history / observability\nconsole.log('[RiskAssessment] order=' + ($json.order_id || 'n/a') +\n  ' amount=' + amount + ' score=' + score + ' rec=' + recommendation + ' risk=' + risk_level);\n\nreturn { json: { ...$json, amount_parsed: amount, system_recommendation: recommendation, confidence, risk_level, risk_reasons, assessment_summary: summary } };"
+      },
+      "id": "afe16388-8ae3-4b1e-828b-dde89cb366da",
+      "name": "Risk Assessment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        352,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "resume": "form",
+        "formTitle": "Refund Approval — Human Review",
+        "formDescription": "=Order {{ $(\"Refund Request Form\").item.json.order_id }} — {{ $(\"Refund Request Form\").item.json.customer_name }} — ${{ $(\"Refund Request Form\").item.json.amount }}<br><br><b>Customer reason:</b> {{ $(\"Refund Request Form\").item.json.reason }}<br><br><b>System recommendation (decision support only):</b><br>{{ $json.assessment_summary }}",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Your Decision",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Approve"
+                  },
+                  {
+                    "option": "Reject"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Reviewer Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Review Notes (optional)",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "60d43eeb-7f84-4f64-a577-9ab0ca435940",
+      "name": "Human Review",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        576,
+        112
+      ],
+      "webhookId": "be9f7c08-d35f-41be-8b89-c133b8120c64"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "decision-approve",
+              "leftValue": "={{ $json.decision }}",
+              "rightValue": "Approve",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "9b30b263-5c1c-4ed1-bea3-abb82297bb70",
+      "name": "Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        800,
+        112
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "c25348d5-2c94-4956-867a-4ef22840775b",
+      "name": "Process Refund (Final Action)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        16
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "d4f4b03e-61d6-42ae-8e56-0d5d594eef8c",
+      "name": "Rejected — Notify & Stop",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "rEG3OOU51nQkqqHp",
+          "cachedResultName": "refund_audit_log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $now.toISO() }}",
+            "order_id": "={{ $(\"Refund Request Form\").item.json.order_id }}",
+            "customer_name": "={{ $(\"Refund Request Form\").item.json.customer_name }}",
+            "customer_email": "={{ $(\"Refund Request Form\").item.json.customer_email }}",
+            "amount": "={{ $(\"Risk Assessment\").item.json.amount_parsed }}",
+            "reason": "={{ $(\"Refund Request Form\").item.json.reason }}",
+            "system_recommendation": "={{ $(\"Risk Assessment\").item.json.system_recommendation }}",
+            "risk_level": "={{ $(\"Risk Assessment\").item.json.risk_level }}",
+            "risk_reasons": "={{ $(\"Risk Assessment\").item.json.risk_reasons }}",
+            "human_decision": "={{ $json.decision }}",
+            "reviewer_name": "={{ $json[\"Reviewer Name\"] }}",
+            "review_notes": "={{ $json[\"Review Notes (optional)\"] }}",
+            "execution_id": "={{ $execution.id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount",
+              "displayName": "amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "system_recommendation",
+              "displayName": "system_recommendation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "risk_level",
+              "displayName": "risk_level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "risk_reasons",
+              "displayName": "risk_reasons",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "human_decision",
+              "displayName": "human_decision",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reviewer_name",
+              "displayName": "reviewer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "review_notes",
+              "displayName": "review_notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "86a65daf-4e9d-428e-afef-23e4f0aca05e",
+      "name": "Log Audit Trail",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        304
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Refund Request Form": {
+      "main": [
+        [
+          {
+            "node": "Risk Assessment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Risk Assessment": {
+      "main": [
+        [
+          {
+            "node": "Human Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Human Review": {
+      "main": [
+        [
+          {
+            "node": "Approved?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Audit Trail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved?": {
+      "main": [
+        [
+          {
+            "node": "Process Refund (Final Action)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Rejected — Notify & Stop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b35bac06-77b4-4229-957f-3a89ef01dad7",
+  "meta": {
+    "instanceId": "8da2e8ae2330b36b5b047a6278b782a90483d2d9bab9ca4b43fdd586cbd3e987"
+  },
+  "nodeGroups": [],
+  "id": "27bSATSYx4THyGrU",
+  "tags": []
+}
