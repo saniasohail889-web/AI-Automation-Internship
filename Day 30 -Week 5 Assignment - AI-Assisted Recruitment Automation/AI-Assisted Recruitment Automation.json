@@ -1,0 +1,863 @@
+{
+  "name": "AI-Assisted Recruitment Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Job Application",
+        "formDescription": "Submit your details and upload your resume (PDF). Our team reviews every application; AI assists but a human makes the final decision.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Full Name",
+              "fieldName": "candidate_name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "fieldName": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Phone",
+              "fieldName": "phone"
+            },
+            {
+              "fieldLabel": "Position Applied For",
+              "fieldName": "position",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Resume",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".pdf",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "path": "job-application",
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Thank you! Your application has been received. Our recruitment team will be in touch after review."
+            }
+          }
+        }
+      },
+      "id": "ff446dca-3725-4991-b3c5-f26a13f2968b",
+      "name": "Application",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        272
+      ],
+      "webhookId": "8677d961-b0e8-4762-aa05-21add37ee1ca"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "Resume",
+        "options": {
+          "joinPages": true
+        }
+      },
+      "id": "cba9c33c-7b46-462b-b3a0-5034368b80ee",
+      "name": "Extract Resume Text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        272
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "DfMmQbjsMWKYMOdB",
+          "cachedResultName": "error_log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "error_message": "={{ ($json[\"error\"] && ($json[\"error\"].message || JSON.stringify($json[\"error\"]))) || \"Processing error in recruitment workflow\" }}",
+            "execution_id": "={{ $execution.id }}",
+            "execution_url": "={{ $execution.resumeUrl || \"\" }}",
+            "failed_node": "={{ ($json[\"error\"] && $json[\"error\"].node && $json[\"error\"].node.name) || \"Extract/AI stage\" }}",
+            "workflow_id": "={{ $workflow.id }}",
+            "workflow_name": "={{ $workflow.name }}",
+            "timestamp": "={{ $now.toISO() }}"
+          },
+          "schema": [
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "display": true,
+              "required": false
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "display": true,
+              "required": false
+            },
+            {
+              "id": "execution_url",
+              "displayName": "execution_url",
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "display": true,
+              "required": false
+            },
+            {
+              "id": "failed_node",
+              "displayName": "failed_node",
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "display": true,
+              "required": false
+            },
+            {
+              "id": "workflow_id",
+              "displayName": "workflow_id",
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "display": true,
+              "required": false
+            },
+            {
+              "id": "workflow_name",
+              "displayName": "workflow_name",
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "display": true,
+              "required": false
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "type": "date",
+              "canBeUsedToMatch": true,
+              "display": true,
+              "required": false
+            }
+          ],
+          "matchingColumns": []
+        },
+        "options": {}
+      },
+      "id": "2dbe4628-f9ae-452f-a1df-35c3a7159f4a",
+      "name": "Log Error",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "text": "=Position applied for: {{ $(\"Application\").item.json.position }}\n\nResume:\n{{ $(\"Extract Resume Text\").item.json.text }}",
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\"skills\":[\"JavaScript\",\"Python\",\"AWS\"],\"experience_years\":5,\"score\":78,\"recommendation\":\"shortlist\",\"reason\":\"Strong match on required skills and relevant seniority.\",\"summary\":\"Concise 1-2 sentence profile of the candidate.\"}",
+        "options": {
+          "systemPromptTemplate": "You are an AI recruitment assistant. You ANALYZE and ASSIST only — you never make the final hiring decision, a human does. From the candidate's resume and the position applied for, extract a structured assessment. Rules: (1) skills = concrete technical/professional skills evidenced in the resume. (2) experience_years = total relevant professional years as a number (estimate conservatively, use 0 if unclear). (3) score = integer 0-100 measuring fit for the stated position. (4) recommendation = one of \"shortlist\", \"maybe\", or \"reject\" based purely on fit. (5) reason = one short, factual sentence justifying the score/recommendation. (6) summary = 1-2 neutral sentences. Be objective, avoid bias regarding age, gender, ethnicity, or personal attributes; assess only skills and experience."
+        }
+      },
+      "id": "5e7e282f-9834-487d-9c67-aa2abccdc53d",
+      "name": "AI Analysis",
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        352,
+        80
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "51e35fc9-d9c2-40b5-bd27-b2df97b0ec88",
+      "name": "OpenAI Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        576,
+        256
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "yRJZVc5tNAVjKR9W",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Combine AI analysis with deterministic business rules.\nconst form = $('Application').item.json;\nconst aiRaw = $('AI Analysis').item.json;\nconst ai = aiRaw && aiRaw.output ? aiRaw.output : aiRaw || {};\n\n// --- normalize AI fields ---\nlet skills = ai.skills;\nif (Array.isArray(skills)) skills = skills.join(', ');\nskills = (skills || '').toString().trim();\n\nlet years = Number(ai.experience_years);\nif (!isFinite(years) || years < 0) years = 0;\n\nlet score = Number(ai.score);\nif (!isFinite(score)) score = 0;\nscore = Math.max(0, Math.min(100, Math.round(score)));\n\nlet aiRec = (ai.recommendation || '').toString().toLowerCase().trim();\nif (!['shortlist', 'maybe', 'reject'].includes(aiRec)) aiRec = 'maybe';\n\nconst reason = (ai.reason || ai.summary || 'No AI reason provided.').toString().trim();\n\n// --- deterministic rule flags ---\nconst flags = [];\nif (!skills) flags.push('no_skills_detected');\nif (years < 2) flags.push('junior_experience');\nif (score < 40) flags.push('low_ai_score');\nif (score >= 80) flags.push('high_ai_score');\nif (!form.email || !/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(String(form.email))) {\n  flags.push('invalid_email');\n}\n\n// --- combined system recommendation (AI + rules) ---\nlet systemRecommendation = aiRec;\nif (score >= 70 && years >= 2) systemRecommendation = 'shortlist';\nelse if (score < 40) systemRecommendation = 'reject';\n\nreturn [{\n  json: {\n    candidate_name: form.candidate_name || '',\n    email: form.email || '',\n    phone: form.phone || '',\n    position: form.position || '',\n    resume_text: ($('Extract Resume Text').item.json.text || '').toString().slice(0, 5000),\n    skills,\n    experience_years: years,\n    ai_score: score,\n    ai_recommendation: aiRec,\n    ai_reason: reason,\n    rule_flags: flags.join(', ') || 'none',\n    system_recommendation: systemRecommendation,\n    status: 'pending_review',\n    execution_id: $execution.id,\n  },\n}];"
+      },
+      "id": "8028e093-3f4b-4787-a26a-79b933c5ef1c",
+      "name": "Rule-Based Assessment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "BheLLR3YCffE2dmh",
+          "cachedResultName": "candidates"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "candidate_name": "={{ $json.candidate_name }}",
+            "email": "={{ $json.email }}",
+            "phone": "={{ $json.phone }}",
+            "position": "={{ $json.position }}",
+            "resume_text": "={{ $json.resume_text }}",
+            "skills": "={{ $json.skills }}",
+            "experience_years": "={{ $json.experience_years }}",
+            "ai_score": "={{ $json.ai_score }}",
+            "ai_recommendation": "={{ $json.ai_recommendation }}",
+            "ai_reason": "={{ $json.ai_reason }}",
+            "rule_flags": "={{ $json.rule_flags }}",
+            "status": "={{ $json.status }}",
+            "execution_id": "={{ $json.execution_id }}",
+            "submitted_at": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "candidate_name",
+              "displayName": "candidate_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "position",
+              "displayName": "position",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "resume_text",
+              "displayName": "resume_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "skills",
+              "displayName": "skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "experience_years",
+              "displayName": "experience_years",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ai_score",
+              "displayName": "ai_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ai_recommendation",
+              "displayName": "ai_recommendation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ai_reason",
+              "displayName": "ai_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "rule_flags",
+              "displayName": "rule_flags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "final_decision",
+              "displayName": "final_decision",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reviewer_response",
+              "displayName": "reviewer_response",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "submitted_at",
+              "displayName": "submitted_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "67b98842-0570-4aef-a9a9-615c6958d702",
+      "name": "Store Candidate Data",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1024,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "saniasohail889@gmail.com",
+        "subject": "=Candidate review: {{ $(\"Rule-Based Assessment\").item.json.candidate_name }} — {{ $(\"Rule-Based Assessment\").item.json.position }}",
+        "message": "=<h2>Candidate review required</h2>\n<p><b>AI assists — you make the final decision.</b></p>\n<ul>\n<li><b>Name:</b> {{ $(\"Rule-Based Assessment\").item.json.candidate_name }}</li>\n<li><b>Email:</b> {{ $(\"Rule-Based Assessment\").item.json.email }}</li>\n<li><b>Phone:</b> {{ $(\"Rule-Based Assessment\").item.json.phone }}</li>\n<li><b>Position:</b> {{ $(\"Rule-Based Assessment\").item.json.position }}</li>\n<li><b>Experience (yrs):</b> {{ $(\"Rule-Based Assessment\").item.json.experience_years }}</li>\n<li><b>Skills:</b> {{ $(\"Rule-Based Assessment\").item.json.skills }}</li>\n<li><b>AI score:</b> {{ $(\"Rule-Based Assessment\").item.json.ai_score }}/100</li>\n<li><b>AI recommendation:</b> {{ $(\"Rule-Based Assessment\").item.json.ai_recommendation }}</li>\n<li><b>System recommendation:</b> {{ $(\"Rule-Based Assessment\").item.json.system_recommendation }}</li>\n<li><b>AI reason:</b> {{ $(\"Rule-Based Assessment\").item.json.ai_reason }}</li>\n<li><b>Rule flags:</b> {{ $(\"Rule-Based Assessment\").item.json.rule_flags }}</li>\n</ul>\n<p>Click <b>Shortlist</b> to advance the candidate, or <b>Reject</b> to decline.</p>",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "Shortlist",
+            "disapproveLabel": "Reject"
+          }
+        },
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "resumeAmount": 7,
+              "resumeUnit": "days"
+            }
+          }
+        }
+      },
+      "id": "72240a78-b7a0-4ee4-b860-20b3edec30c3",
+      "name": "Human Review",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1248,
+        96
+      ],
+      "webhookId": "afc051a9-9666-4d7b-8539-d6ceca99ef88",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "maPkYSWWsaUBGSH7",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "approved",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "155d117f-444e-4493-bbd9-55766ed5ccff",
+      "name": "Shortlisted?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1472,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $(\"Rule-Based Assessment\").item.json.email }}",
+        "subject": "=Your application for {{ $(\"Rule-Based Assessment\").item.json.position }} — next steps",
+        "message": "=<p>Dear {{ $(\"Rule-Based Assessment\").item.json.candidate_name }},</p>\n<p>Thank you for applying for the <b>{{ $(\"Rule-Based Assessment\").item.json.position }}</b> role. We are pleased to let you know that your application has been <b>shortlisted</b>. A member of our recruitment team will contact you shortly to arrange the next steps.</p>\n<p>Best regards,<br/>Recruitment Team</p>",
+        "options": {}
+      },
+      "id": "3150df39-30e9-49e0-b10f-519d29b06c6b",
+      "name": "Email — Shortlisted",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1696,
+        0
+      ],
+      "webhookId": "4eebcf33-0a87-4dd0-a5c8-c45df0b03e28",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "maPkYSWWsaUBGSH7",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "BheLLR3YCffE2dmh",
+          "cachedResultName": "candidates"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "execution_id",
+              "keyValue": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "shortlisted",
+            "final_decision": "shortlist",
+            "reviewer_response": "Approved (Shortlist) by human reviewer"
+          },
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "display": true,
+              "required": false
+            },
+            {
+              "id": "final_decision",
+              "displayName": "final_decision",
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "display": true,
+              "required": false
+            },
+            {
+              "id": "reviewer_response",
+              "displayName": "reviewer_response",
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "display": true,
+              "required": false
+            }
+          ],
+          "matchingColumns": []
+        },
+        "options": {}
+      },
+      "id": "7393cad1-2766-484a-8100-a18994ec8e1d",
+      "name": "Update — Shortlisted",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1920,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $(\"Rule-Based Assessment\").item.json.email }}",
+        "subject": "=Your application for {{ $(\"Rule-Based Assessment\").item.json.position }}",
+        "message": "=<p>Dear {{ $(\"Rule-Based Assessment\").item.json.candidate_name }},</p>\n<p>Thank you for your interest in the <b>{{ $(\"Rule-Based Assessment\").item.json.position }}</b> role and for the time you invested in your application. After careful review, we have decided not to move forward at this time.</p>\n<p>We wish you the very best in your job search and encourage you to apply for future openings that match your experience.</p>\n<p>Best regards,<br/>Recruitment Team</p>",
+        "options": {}
+      },
+      "id": "2eccbc78-03a0-4a9d-8b09-9fa41886dbfe",
+      "name": "Email — Rejected",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1696,
+        192
+      ],
+      "webhookId": "95bebe90-01e5-4818-b751-db120edaa907",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "maPkYSWWsaUBGSH7",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "BheLLR3YCffE2dmh",
+          "cachedResultName": "candidates"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "execution_id",
+              "keyValue": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "rejected",
+            "final_decision": "reject",
+            "reviewer_response": "Declined (Reject) by human reviewer"
+          },
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "display": true,
+              "required": false
+            },
+            {
+              "id": "final_decision",
+              "displayName": "final_decision",
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "display": true,
+              "required": false
+            },
+            {
+              "id": "reviewer_response",
+              "displayName": "reviewer_response",
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "display": true,
+              "required": false
+            }
+          ],
+          "matchingColumns": []
+        },
+        "options": {}
+      },
+      "id": "82769175-2475-4e51-ad16-36b277848aa1",
+      "name": "Update — Rejected",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1920,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "saniasohail889@gmail.com",
+        "subject": "=[Recruitment workflow] Processing error — execution {{ $execution.id }}",
+        "message": "=<p>An error occurred while processing a candidate application.</p>\n<ul>\n<li><b>Workflow:</b> {{ $workflow.name }} ({{ $workflow.id }})</li>\n<li><b>Execution:</b> {{ $execution.id }}</li>\n<li><b>Error:</b> {{ $json.error?.message || \"See execution log\" }}</li>\n</ul>\n<p>The candidate was not automatically processed. Please review manually.</p>",
+        "options": {}
+      },
+      "id": "99acd03a-71c5-451a-ac21-5257500f1554",
+      "name": "Notify Admin",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1104,
+        560
+      ],
+      "webhookId": "7a810c9e-8de2-4e81-9eff-c80a83036bf7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "maPkYSWWsaUBGSH7",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Application": {
+      "main": [
+        [
+          {
+            "node": "Extract Resume Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Resume Text": {
+      "main": [
+        [
+          {
+            "node": "AI Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Error": {
+      "main": [
+        [
+          {
+            "node": "Notify Admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Analysis": {
+      "main": [
+        [
+          {
+            "node": "Rule-Based Assessment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Analysis",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rule-Based Assessment": {
+      "main": [
+        [
+          {
+            "node": "Store Candidate Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Candidate Data": {
+      "main": [
+        [
+          {
+            "node": "Human Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Human Review": {
+      "main": [
+        [
+          {
+            "node": "Shortlisted?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shortlisted?": {
+      "main": [
+        [
+          {
+            "node": "Email — Shortlisted",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email — Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email — Shortlisted": {
+      "main": [
+        [
+          {
+            "node": "Update — Shortlisted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email — Rejected": {
+      "main": [
+        [
+          {
+            "node": "Update — Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "e73691aa-3830-46c9-b848-c783e9dc2eef",
+  "meta": {
+    "instanceId": "8da2e8ae2330b36b5b047a6278b782a90483d2d9bab9ca4b43fdd586cbd3e987"
+  },
+  "nodeGroups": [
+    {
+      "id": "b6b738c7-a7ad-4af1-a7b9-1132a4704d84",
+      "name": "Error Handling",
+      "nodeIds": [
+        "2dbe4628-f9ae-452f-a1df-35c3a7159f4a",
+        "99acd03a-71c5-451a-ac21-5257500f1554"
+      ],
+      "description": "Log extraction/AI failures and alert an admin so no candidate is silently dropped."
+    }
+  ],
+  "id": "cofgZjyjHbfJVUGC",
+  "tags": []
+}
